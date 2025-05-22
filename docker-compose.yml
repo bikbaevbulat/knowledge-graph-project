@@ -1,0 +1,94 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    env_file: .env
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - backend
+
+  redis:
+    image: redis:7
+    env_file: .env
+    networks:
+      - backend
+    ports:
+      - "6379:6379"
+
+  memgraph:
+    image: memgraph/memgraph-platform
+    env_file: .env
+    ports:
+      - "7687:7687"  # для конекта
+      - "3000:3000"  # для доступа к Memgraph Lab
+
+    networks:
+      - backend
+
+  backend:
+    build:
+      context: .
+      dockerfile: ./backend/Dockerfile
+    working_dir: /app/backend
+    command: uvicorn backend.main:app --host 0.0.0.0 --port 8000
+    env_file: .env
+    environment:
+      - PYTHONPATH=/app
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+      - redis
+      - memgraph
+    networks:
+      - backend
+
+  celery_worker:
+    build:
+      context: .
+      dockerfile: ./backend/Dockerfile
+    working_dir: /app/backend
+    command: celery -A backend.tasks worker --loglevel=info
+    env_file: .env
+    environment:
+      - PYTHONPATH=/app
+    depends_on:
+      - backend
+      - redis
+    volumes:
+      - .:/app
+    networks:
+      - backend
+
+  frontend:
+    build: ./frontend
+    env_file: .env
+    environment:
+      - API_URL=http://backend:8000
+    volumes:
+      - ./frontend:/app
+    ports:
+      - "8501:8501"
+    depends_on:
+      - backend
+    networks:
+      - backend
+
+volumes:
+  pgdata:
+
+networks:
+  backend:
+    driver: bridge
+    driver_opts:
+      com.docker.network.driver.mtu: 1450
