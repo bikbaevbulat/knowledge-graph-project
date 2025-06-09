@@ -1,5 +1,6 @@
+gunicorn
 fastapi
-uvicorn
+uvicorn[standard]
 sqlalchemy
 psycopg2-binary
 python-jose[cryptography]
@@ -12,3 +13,6 @@ streamlit
 pyvis
 gigachat
 gqlalchemy
+redis[asyncio]
+sentence-transformers
+networkx

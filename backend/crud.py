@@ -16,8 +16,8 @@ def authenticate_user(db: Session, username: str, password: str):
         return None
     return user
 
-def create_graph(db: Session, title: str, user_id: int):
-    graph = models.KnowledgeGraph(title=title, owner_id=user_id)
+def create_graph(db: Session, title: str, user_id: int, is_tatar: bool = False):
+    graph = models.KnowledgeGraph(title=title, owner_id=user_id, is_tatar=is_tatar)
     db.add(graph)
     db.commit()
     db.refresh(graph)
@@ -35,3 +35,22 @@ def save_query_result(db: Session, query: str, response: str, graph_id: int, use
 
 def get_user_graphs(db: Session, user_id: int):
     return db.query(models.KnowledgeGraph).filter(models.KnowledgeGraph.owner_id == user_id).all()
+
+
+# crud.py
+def get_user_history(db: Session, user_id: int):
+    return (
+        db.query(models.SearchHistory)
+        .filter(models.SearchHistory.user_id == user_id)
+        .join(models.KnowledgeGraph)
+        .order_by(models.SearchHistory.created_at.desc())
+        .all()
+    )
+
+def get_graph_by_id(db: Session, graph_id: int):
+    return db.query(models.KnowledgeGraph).filter(models.KnowledgeGraph.id == graph_id).first()
+
+def delete_graph(db: Session, graph: models.KnowledgeGraph):
+    db.delete(graph)
+    db.commit()
+

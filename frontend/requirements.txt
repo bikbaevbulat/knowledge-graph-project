@@ -2,3 +2,10 @@ streamlit
 requests
 networkx
 pyvis
+streamlit-cookies-manager
+python-jose[cryptography]
+asyncio
+websockets
+beautifulsoup4
+PyMuPDF
+python-docx

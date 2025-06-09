@@ -38,15 +38,16 @@ def get_access_token():
     response.raise_for_status()
     return response.json()["access_token"]
 
-def extract_knowledge_graph(text: str) -> str:
+def extract_knowledge_graph(text: str, is_tatar: bool = False) -> str:
     """
     Запрос к GigaChat API: извлечение сущностей и связей в виде графа
     """
+    language_note = "Текст написан на татарском языке. Твой ответ должен содержать только татарские слова!!!!!!\n" if is_tatar else ""
 
-    prompt = """Ты помощник по созданию графов знаний. 
-    Проанализируй следующий текст и выдели сущности и связи между ними. 
+    prompt = f"""{language_note}"""+"""Ты помощник по созданию графов знаний. 
+    Проанализируй следующий текст и выдели сущности с их типами и связи между ними. 
     Верни JSON-массив с элементами, содержащими 'name', 'desc' и опционально 'relations' 
-    Пример: [ {\"name\": \"Сколтех\", \"desc\": \"Институт...\", \"relations\": [{\"type\": \"СОТРУДНИЧАЕТ\", \"target\": \"МФТИ\"}] } ] 
+    Пример: [ {\"name\": \"Сколтех\", \"desc\": \"Институт...\",\"type\": \"Организация\", \"relations\": [{\"type\": \"СОТРУДНИЧАЕТ\", \"target\": \"МФТИ\"}] } ] 
     и ничего больше!\n""" + f"""{text}"""
 
     response = giga.chat(prompt)
@@ -54,11 +55,15 @@ def extract_knowledge_graph(text: str) -> str:
     print("gigachat response type", type(response))
     return response.choices[0].message.content
 
-def answer_semantic_query(query: str, graph_data: str) -> str:
+def answer_semantic_query(query: str, graph_data: str, is_tatar: bool = False) -> str:
     """
     Получить логически связанный ответ на основе текста и графа знаний
     """
-    prompt = f"""Ответь на вопрос: "{query}" используя информацию из следующего графа знаний (в JSON). Не присылай ничего кроме ответа на вопрос!:
+
+    language_note = " на татарском" if is_tatar else ""
+
+
+    prompt = f"""Ответь на вопрос{language_note}: "{query}" используя информацию из следующего графа знаний (в JSON). Не присылай ничего кроме ответа на вопрос!:
 {graph_data}"""
 
     response = giga.chat(prompt)

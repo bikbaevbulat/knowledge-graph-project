@@ -1,5 +1,5 @@
 # backend/models.py
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Text
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Text, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from datetime import datetime
@@ -12,7 +12,7 @@ class User(Base):
     id = Column(Integer, primary_key=True)
     username = Column(String(50), unique=True, nullable=False)
     hashed_password = Column(String(128), nullable=False)
-
+    is_admin = Column(Boolean, default=False, nullable=False)
     graphs = relationship("KnowledgeGraph", back_populates="owner")
 
 class KnowledgeGraph(Base):
@@ -22,9 +22,9 @@ class KnowledgeGraph(Base):
     title = Column(String(100))
     owner_id = Column(Integer, ForeignKey("users.id"))
     created_at = Column(DateTime, default=datetime.utcnow)
-
     owner = relationship("User", back_populates="graphs")
     queries = relationship("SearchHistory", back_populates="graph")
+    is_tatar = Column(Boolean, default=False)
 
 class SearchHistory(Base):
     __tablename__ = "search_history"
